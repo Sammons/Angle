@@ -20,50 +20,63 @@ var player = function(name,id) {
 
 //sending and recieving for game engine
 //also handles any handshaking that may need to happen
-var networker = function(wss) {
-	this.sendToAll = function (data) {
-		for (var i in wss.clients) {
-			if (wss.clients[i].open) {
-				wss.clients[i].send(JSON.stringify(data));
-			}
-		}
-	};
-	this.sendToClient = function(client,data) {
-		if (client.open) client.send(JSON.stringify(data));
-	};
-	var messageQ = [];//queue of incoming messages from clients
-	this.drainMessageQ = function() {
-		var q = messageQ;
-		messageQ = [];
-		return q
-	};
+var socketManager = function (wss) {
 	var clients = {};
+	var timeout = 750;
+	var heartbeat = 50;
+	var ids = 0; 
+	var listeners = [
+		function(data,client) {//thse are listeners that don't really affect the rest of the game
+			console.log("message recieved "+data.topic);
+		}
+	];
+
+	var incMessageQ = [];//queue of incoming messages from clients
+	var outMessageQ = [];//queue of things to send to everyone
+
+	this.drainOutMessageQ = function(f) {
+		var q = outMessageQ;
+		outMessageQ = [];
+		for (var i = q.length - 1; i >= 0; i--) {
+			f(q[i]);
+		};
+	};
+	this.pushOutMessageQ = function(info) {
+		outMessageQ.push(JSON.stringify(info));
+	};
+
+	this.drainIncMessageQ = function(f) {
+		var q = incMessageQ;
+		incMessageQ = [];
+		for (var i = q.length - 1; i >= 0; i--) {
+			f(q[i]);
+		};
+	};
+
 	this.getClients = function() {
 		return clients;
 	};
-	var idTicker = 0;
-	wss.on("connection",function(client) {
-		clients[idTicker] = client;//set key to this client -- to avoid wss.clients array
-		client.id = idTicker;
-		var id = idTicker;//scopage
-		var acknowledgePlayer = {//set client's id
-			"key" : "ID",
-			"value" : id
-		}
-		client.send(JSON.stringify(acknowledgePlayer));//tell client what their id is
-		client.on("message",function(data,flags) {//any data a client sends goes on the Q
-			rdata = JSON.parse(data);
-			rdata["id"] = client.id;
-			messageQ.push(rdata);
-		});
-		idTicker++;//tick id for next client who joins
-	});
 
-	this.getMessages = function() {
-		return messageQ;
+	this.getClient = function(id) {
+		return clients[id];
 	};
-	console.log("networker initialized");
 
+
+	wss.on("connection",function(client) {
+		client.id = ids;
+		clients[ids] = client;
+		client.send(JSON.stringify({topic: "connected", value: true, id : ids}))
+		client.on("message",function(message) {
+			var data = JSON.parse(message);
+			data["id"]=client.id;
+			data["recieved"] = Date.now();
+			incMessageQ.push(data);
+			for (var i = listeners.length - 1; i >= 0; i--) {
+				listeners[i](data,client);
+			}
+		});
+		ids++;
+	});
 }
 
 var playerController = function() {
@@ -78,8 +91,9 @@ var playerController = function() {
 		cycles++;
 		if (cycles > 6) {//flag everyone as gone every sixth cycle
 			forEachPlayer(players, function(player) {
+				console.log(player);
 				if (player) {
-					if (!player.heartbeat) player.connected = false;
+					if (!(player.heartbeat)) player.connected = false;
 					else player.connected = true;
 					player.heartbeat = false;
 				}
@@ -122,19 +136,10 @@ exports.begin = function(wss){
 	var interval = 40;
 	console.log("game loop beginning, interval set to "+interval+" ms");
 	var players = {};
-	var network = new networker(wss);
+	var network = new socketManager(wss);
 	var playerControl = new playerController();
 	setInterval(function() {
-		gameLoop(players)
-		network.sendToAll(players);
-		playerControl.processMessageQ(players,network.drainMessageQ());
-		for (var key in Object.keys(players)) {
-			console.log(key);
-			if (players[key] && !players[key].connected) {
-				console.log("bumping "+players[key].name);
-				network.sendToClient(network.getClients()[players[key].id],{"bumped":true});
-				//delete players[key];
-			}
-		}
+		//gameLoop(players)
+		//network.sendToAll(players);
 	},interval);
 };

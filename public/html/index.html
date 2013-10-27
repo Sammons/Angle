@@ -16,6 +16,12 @@
 			console.log(data);
 			gameDetails[data.key] = data.value;
 		};
+		var sendMessage = function(message) {
+			//message["sent"] = Date.now();
+			JSON.stringify(message);
+			console.log("Sending "+message);
+			socket.send(message);
+		};
 		//igniter
 		setInterval(function() {
 
@@ -34,12 +40,12 @@
 				$(window).keydown(function(e) {
 					e.preventDefault();
 					var msg = {"topic": "keydown", "value": e.which}
-					socket.send(JSON.stringify(msg));
+					sendMessage(msg);
 				});
 				
 				setInterval(function() {
 					var msg ={"topic" : "heartbeat"};
-					if (present) socket.send(JSON.stringify(msg));
+					if (present) sendMessage(msg);
 				},50);
 				
 				$(window).blur(function() {

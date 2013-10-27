@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Angle</title>
+	<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+	<script type="text/javascript">
+	//top level things
+	$(document).ready(function() {
+		var bullets = [];
+		var players = {};
+		var myID = -1;
+		var socket = new WebSocket("ws://localhost:5001/");
+		socket.onopen = function () {
+			console.log("socket opened");
+			var msg = {newPlayer:true};
+			socket.send(JSON.stringify(msg));
+			console.log("sending initial message");
+		}
+
+		socket.onmessage = function(message) {
+			data = JSON.parse(message.data);
+			if (data.registered) {
+				console.log("server registered me with id "+data.ID);
+				myID = data.ID;
+			} else {
+				players = data.players;
+			}
+		};
+		setInterval(function() {
+			socket.send(JSON.stringify({ping:true, ID: myID}));
+		},500);
+
+		var updateServer = function (keypresses,clicks) {
+			var data = {ID: myID, inputs: {keypresses: keypresses, clicks: clicks}};
+			socket.send(JSON.stringify(data));
+		}
+	})
+	</script>
+	<script type="text/javascript" src="/r1"></script>
+	<script type="text/javascript" src="/r2"></script>
+	<script type="text/javascript" src="/r3"></script>
+
+</head>
+<body>
+<header>Welcome</header>
+<h1 id="push-test"></h1>
+<h1 id="reciever-test"></h1>
+<h1 id="processor-test"></h1>
+<canvas>
+	
+</canvas>
+</body>
+</html>

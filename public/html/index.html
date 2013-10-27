@@ -13,14 +13,15 @@
 		var present = true;
 		socket.onmessage = function(message) {
 			data = JSON.parse(message.data);
-			console.log(data);
-			gameDetails[data.key] = data.value;
+			console.log(Object.keys(data));
+			gameDetails[data["topic"]] = data["value"];
+			console.log(gameDetails);
 		};
 		var sendMessage = function(message) {
-			//message["sent"] = Date.now();
-			JSON.stringify(message);
+			message["sent"] = Date.now();
 			console.log("Sending "+message);
-			socket.send(message);
+			var d = JSON.stringify(message);
+			socket.send(d);
 		};
 		//igniter
 		setInterval(function() {
@@ -35,7 +36,10 @@
 					"topic" : "intro",
 					"name" : $("#name").val()
 				}
-				socket.send(JSON.stringify(intro));
+				sendMessage(intro);
+				
+				var enterGame = {"topic":"connected", "value":true}
+				//sendMessage(enterGame);
 
 				$(window).keydown(function(e) {
 					e.preventDefault();
@@ -44,17 +48,19 @@
 				});
 				
 				setInterval(function() {
-					var msg ={"topic" : "heartbeat"};
+					var msg ={"topic" : "heartbeat", "value" : "alive"};
 					if (present) sendMessage(msg);
 				},50);
-				
-				$(window).blur(function() {
-					present = false;
-				});
+				if (gameDetails.rules.timeoutPlayers) {
 
-				$(window).focus(function() {
-					present = true;
-				});
+					$(window).blur(function() {
+						present = false;
+					});
+
+					$(window).focus(function() {
+						present = true;
+					});
+				}
 			});
 		});
 	</script>

@@ -5,21 +5,109 @@ var gameClientSettings = {
 }
 
 var rules ={
-	timeoutPlayers : false,
-	tickInterval : 40
+	timeoutPlayers : true,
+	tickInterval : 40,
+	startX: 25,
+	startY: 25,
+	playerWidth: 15,
+	playerHeight: 10,
+	startOrient: "right"
 }
 
+
+
+var physicsManager = function() {//tends to live inside playermanager
+	var worldWidth = 500;
+	var worldMap = new Array(worldWidth);
+	var motionTypes = {
+		halting : false,
+		continuous : true
+	};
+	var motionSpeeds = {
+		fast : 10,
+		slow : 5
+	};
+	var pixel = function(x,y) {
+		this.x = x;
+		this.y = y;
+		this.owner = null;
+	};
+	for (var i = worldMap.length - 1; i >= 0; i--) {
+		worldMap[i] = new Array(worldWidth);
+	};
+	for (var i = worldMap.length - 1; i >= 0; i--) {
+		 for (var j = worldMap[i].length -1; j>=0; j--) {
+		 	worldMap[i][j] = new pixel(i,j);
+		 }
+	};
+	this.moveObject = function(object,collisionFunc) {
+		if (object.moving) {
+			var speed = motionSpeeds[object.speed];
+			var MotionY = speed*Math.sin((object.theta/180)*Math.PI);
+			var MotionX = speed*Math.cos((object.theta/180)*Math.PI);
+			object.X += MotionX;
+			object.Y += MotionY;
+			for (var i = bodyPixels.length - 1; i >= 0; i--) {
+				if (bodyPixels[i] != null && worldMap[(bodyPixels[i].x+MotionX)%worldWidth][(bodyPixels[i].y+MotionY)%worldWidth].owner != object.id ) {
+					if (collisionFunc) {
+					collisionFunc(object,worldMap[(bodyPixels[i].x+MotionX)%worldWidth][(bodyPixels[i].y+MotionY)%worldWidth].owner);
+					}
+					console.log("collision between "+object.id+" and "+ worldMap[(bodyPixels[i].x+MotionX)%worldWidth][(bodyPixels[i].y+MotionY)%worldWidth].owner);
+					i = 0;
+				}
+			};
+		}
+		if (!motionTypes[object.motionType]) {
+			object.moving = false;
+		}
+
+	};
+	this.createNewBlockData = function(object) {
+		var pixelArray = new Array(object.width*object.height*4);
+		for (var i = 0; i < pixelArray.length; i+=4) {
+			pixelArray[i] = object.R;
+			pixelArray[i+1] = object.G;
+			pixelArray[i+2] = object.B;
+			pixelArray[i+3] = object.A;
+		};
+		object.imgData = pixelArray;
+	};
+	this.createBody = function(object) {//generic square
+		object.bodyPixels = [];
+		for (var i = object.width- 1; i >= 0; i--) {
+			for (var j = object.height -1 ; j >= 0; j--) {
+				worldMap[(i+object.x)%worldWidth][(j+object.y)%worldWidth].owner = object.id;
+				object.bodyPixels.push({x: (i+object.x)%worldWidth , y: (j+object.y)%worldWidth});
+			}
+		};
+
+	}
+
+
+};
+var physics = new physicsManager;
+
 var player = function(name,id) {
+
+	this.bulletpixels = [];
 	this.id= id;
 	this.name=name;
-	this.heartbeat =true;
-	this.X= 50;
-	this.Y= 50;
-	this.orient= "right";
-	this.width= 15;
-	this.height= 10;
+	this.x= rules.startX;
+	this.y= rules.startY;
+	this.theta = 0;
+	this.R = Math.floor(Math.random()*256);
+	this.G = Math.floor(Math.random()*256);
+	this.B = Math.floor(Math.random()*256);
+	this.A = 255;
+	this.orient= rules.startOrient;
+	this.width= rules.playerWidth;
+	this.height= rules.playerHeight;
 	this.connected =true;
 	this.moving= false;
+	this.motionType = "halting";
+	this.speed = "slow";
+	physics.createBody(this);
+	physics.createNewBlockData(this);
 }; 
 
 //sending and recieving for game engine
@@ -80,7 +168,7 @@ var socketManager = function (wss, rules) {
 	wss.on("connection",function(client) {
 		client.id = ids;
 		clients[ids] = client;
-		client.send(JSON.stringify({topic: "acknowledged", value: true, id : ids}))
+		client.send(JSON.stringify({topic: "id",value : ids}))
 		client.on("message",function(message) {
 			var data = JSON.parse(message);
 			incMessageQ.push(data);
@@ -120,18 +208,21 @@ var socketManager = function (wss, rules) {
 }
 
 var playerManager = function(rules) {
-	players = {};
-	timeoutPlayers = {};
-	playerCount = 0;
-
+	var players = {};
+	var timeoutPlayers = {};
+	var playerCount = 0;
+	this.getPlayerCount = function() {
+		return playerCount;
+	}
 	this.getPlayers = function() {
+		players.count = playerCount;
 		return players;
 	};
 
 	this.processMessage = function(data) {
 		if (data.topic == "keydown")
 		{
-
+			//game engine commands
 		}
 		else if (data.topic == "connected")
 		{
@@ -140,27 +231,25 @@ var playerManager = function(rules) {
 					console.log("player "+ data.id +" has been reconnected");
 					players[data.id] = timeoutPlayers[data.id];
 					delete timeoutPlayers[data.id];
+					playerCount++;
 				} else {
 					console.log("player "+ data.id + " has connected")
 					players[data.id] = new player(data.name,data.id);
+					playerCount++;
 				}
 			} else {
 				if (players[data.id]) {
 					console.log("player "+ data.id+ " has timed out");
 					timeoutPlayers[data.id] = players[data.id];
 					delete players[data.id];
+					playerCount--;
 				}
 			}
 		}
 	};
-
-
-
 }
 
-var physicsManager = function(rules) {//tends to live inside playermanager
 
-};
 
 
 exports.begin = function(wss){
@@ -171,7 +260,11 @@ exports.begin = function(wss){
 	
 	setInterval(function() {
 		network.pushOutMessageQ({topic: "rules", value: rules});//will become a full ruleset later
-		if (playerMan.playerCount > 0) network.pushOutMessageQ(playerMan.getPlayers());//update clients
+		if (playerMan.getPlayerCount() > 0) {
+		network.pushOutMessageQ({topic: "players", value: playerMan.getPlayers()});//update clients
+		console.log("broadcasting players");
+		} //if there are no players no one cares
+
 		network.drainIncMessageQ(function(data) {//process inputs
 			if (data.topic == "heartbeat") {} else {
 			console.log(data.id + " : "+data.topic+" : "+data.value);}

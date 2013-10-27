@@ -13,20 +13,15 @@
 		var present = true;
 		socket.onmessage = function(message) {
 			data = JSON.parse(message.data);
-			console.log(Object.keys(data));
 			gameDetails[data["topic"]] = data["value"];
-			console.log(gameDetails);
+			if (data.topic == "players") console.log(gameDetails.players[gameDetails.id]);//me
 		};
 		var sendMessage = function(message) {
 			message["sent"] = Date.now();
-			console.log("Sending "+message);
 			var d = JSON.stringify(message);
 			socket.send(d);
 		};
-		//igniter
-		setInterval(function() {
-
-		},1000);
+		
 
 		$("#submit").click(function() {
 			//$("#submit").remove();

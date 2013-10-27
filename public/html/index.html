@@ -6,113 +6,51 @@
 	<script type="text/javascript">
 	//top level things
 	$(document).ready(function() {
+		var socket = new WebSocket("ws://localhost:5001/");
+		var beginRendering = false;
+		var gameJoined = false;
+		var gameDetails = {};
+		var present = true;
+		socket.onmessage = function(message) {
+			data = JSON.parse(message.data);
+			console.log(data);
+			gameDetails[data.key] = data.value;
+		};
+		//igniter
+		setInterval(function() {
+
+		},1000);
 
 		$("#submit").click(function() {
+			//$("#submit").remove();
 
-			function renderPlayer (canvas,miniCanvas, player) {
-						var context = canvas.getContext("2d");
-						if (player.orient == "down") {
-							context.translate(player.X,player.Y);
-							context.rotate(Math.PI/2);
-							context.drawImage(miniCanvas,0,0);
-							context.rotate(-Math.PI/2);
-							context.translate(-(player.X),-(player.Y));
-						} else if (player.orient == "up") {
-							context.translate(player.X,player.Y);
-							context.rotate(-Math.PI/2);
-							context.drawImage(miniCanvas,0,0);
-							context.rotate(+Math.PI/2);
-							context.translate(-(player.X),-(player.Y));
-						} else if (player.orient == "right") {
-							context.translate(player.X,player.Y);
-							context.drawImage(miniCanvas,0,0);
-							context.translate(-(player.X),-(player.Y));
-						} else if (player.orient == "left") {
-							context.translate(player.X,player.Y);
-							context.rotate(Math.PI);
-							context.drawImage(miniCanvas,0,0);
-							context.rotate(-Math.PI);
-							context.translate(-(player.X),-(player.Y));
-						}
-			}
-
-			if ($("#name").val() != "") {
-			$("#submit").remove();
-				var bullets = [];
-				var myID = -1;
-				var socket = new WebSocket("ws://localhost:5001/");
-				var pageHasFocus = true;
-
-
-	
-				socket.onopen = function () {
-					console.log("socket opened");
-					var msg = {newPlayer:true, name: $("#name").val()};
-					socket.send(JSON.stringify(msg));
-					console.log("sending initial message");
+				//just once, send beginning info
+				var intro = {
+					"topic" : "intro",
+					"name" : $("#name").val()
 				}
+				socket.send(JSON.stringify(intro));
 
-				socket.onmessage = function(message) {
-					data = JSON.parse(message.data);
-					var canvas = document.getElementById('canvas');
-					var context = canvas.getContext("2d");
-					var miniCanvas = document.createElement("canvas");
-					var width = 15;
-					var height = 10;
-					miniCanvas.style.width=width+"px";
-					miniCanvas.style.height=height+"px";
-					var ctx = miniCanvas.getContext("2d");
-					if (data.registered) {
-						var inMemCanvas = document.createElement("canvas");
-						console.log("server registered me with id "+data.ID);
-						myID = data.ID;
-					} else {
-						context.clearRect(0, 0, canvas.width, canvas.height);
-						for (var playerKey in Object.keys(data)) {
-						var imgData = context.createImageData(width, height);
-							for(var i=0; i<imgData.data.length;i+=4) {
-							imgData.data[i+0] = ((playerKey%1)*250)%255;
-							imgData.data[i+1] = ((playerKey%2)*250)%255;
-							imgData.data[i+2] = ((playerKey%3)*250)%255;
-							imgData.data[i+3] = 255;
-							}
-						ctx.putImageData(imgData,0,0);
-						renderPlayer(canvas,miniCanvas,data[playerKey]);
-						}
-					}
-				};
-
-				$(document).keydown(function(e) {
-					var msg = {ID:myID, keypress:true, val: e.keyCode};
+				$(window).keydown(function(e) {
+					e.preventDefault();
+					var msg = {"topic": "keydown", "value": e.which}
 					socket.send(JSON.stringify(msg));
 				});
-
+				
 				setInterval(function() {
-
-					if(pageHasFocus) socket.send(JSON.stringify({ping:true, ID: myID}));
+					var msg ={"topic" : "heartbeat"};
+					if (present) socket.send(JSON.stringify(msg));
 				},50);
-
-
-				var updateServer = function (keypresses,clicks) {
-					var data = {ID: myID, inputs: {keypresses: keypresses, clicks: clicks}};
-					socket.send(JSON.stringify(data));
-				}
-
-
+				
 				$(window).blur(function() {
-					pageHasFocus =false;
+					present = false;
 				});
 
 				$(window).focus(function() {
-					pageHasFocus =true;
+					present = true;
 				});
-			
-			} else {
-
-			}
+			});
 		});
-
-	})
 	</script>
 	<script type="text/javascript" src="/r1"></script>
 	<script type="text/javascript" src="/r2"></script>

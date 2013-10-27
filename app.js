@@ -50,7 +50,7 @@ wss.on('connection', function (ws) {
 			name: data.name,
 			X: 50,
 			Y: 50,
-			orient: "left";
+			orient: "right",
 			width: 15,
 			height: 10,
 			pixels: [],
@@ -66,22 +66,31 @@ wss.on('connection', function (ws) {
 		console.log("new player registered with name "+data.name);
 		newestPlayer++;
 		} else if (data.ping) {//recieve data from player
-			if (!(players[data.ID])) {
-				players[data.ID] = timeouts[data.ID];
-				delete timeouts[data.ID];
-				console.log("player "+players[data.ID].name+" has reconnected");
-			}
+			// if (!(players[data.ID])) {
+			// 	players[data.ID] = timeouts[data.ID];
+			// 	delete timeouts[data.ID];
+			// 	console.log("player "+players[data.ID].name+" has reconnected");
+			// }
 			players[data.ID].connected = true;
 		} else if (data.keypress) {
 			if (data.val == 37) {
-				players[data.ID].orient="left";
-				players[data.ID].X += -15;
-				players[data.ID].X %= 500;
+				players[data.ID].orient = "left";
+				//players[data.ID].X += -15;
+				//players[data.ID].X %= 500;
 			} else if (data.val == 40) {
 				players[data.ID].orient = "down";
-				players[data.ID].Y += -15;
-				players[data.ID].Y %= 500;
+				//players[data.ID].Y += -15;
+				//players[data.ID].Y %= 500;
+			} else if (data.val == 39) {
+				players[data.ID].orient = "right";
+				//players[data.ID].X += +15;
+				//players[data.ID].X %= 500;
+			} else if (data.val == 38) {
+				players[data.ID].orient = "up";
 			}
+		} else if (data.image) {
+			console.log("image came in "+ data.imageData);
+			players[data.ID].imageData = data.imageData;
 		}
 	});
 });
@@ -106,13 +115,7 @@ game.Logic = function(wss, players) {
 	for (var i = wss.clients.length - 1; i >= 0; i--) {
 		var id = wss.clients[i].ID;
 		if (players[id]) {
-			var msg = {
-				X: players[id].X,
-				Y: players[id].Y,
-				width: players[id].width,
-				height: players[id].height
-			}
-			wss.clients[i].send(JSON.stringify(msg));
+			wss.clients[i].send(JSON.stringify(players));
 		}
 	};
 };
@@ -120,18 +123,18 @@ setInterval(function() {
 	game.Logic(wss,players);
 },40);
 
-setInterval(function() {
-	for (var i = Object.keys(players).length - 1; i >= 0; i--) {
-		if (players[i] && !players[i].connected) {
-			timeouts[i] = players[i];
-			console.log("player "+players[i].name+" has timed out");
-			delete players[i];
-		} else if (players[i]) {
-			players[i].connected = false;
-		} else if (!players[i]){
-			//console.log("player "+i+" is already gone");
-		}
-	};
-},500);
+// setInterval(function() {
+// 	for (var i = Object.keys(players).length - 1; i >= 0; i--) {
+// 		if (players[i] && !players[i].connected) {
+// 			timeouts[i] = players[i];
+// 			console.log("player "+players[i].name+" has timed out");
+// 			delete players[i];
+// 		} else if (players[i]) {
+// 			players[i].connected = false;
+// 		} else if (!players[i]){
+// 			//console.log("player "+i+" is already gone");
+// 		}
+// 	};
+// },500);
 
 

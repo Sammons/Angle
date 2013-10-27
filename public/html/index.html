@@ -6,34 +6,95 @@
 	<script type="text/javascript">
 	//top level things
 	$(document).ready(function() {
-		var bullets = [];
-		var players = {};
-		var myID = -1;
-		var socket = new WebSocket("ws://localhost:5001/");
-		socket.onopen = function () {
-			console.log("socket opened");
-			var msg = {newPlayer:true};
-			socket.send(JSON.stringify(msg));
-			console.log("sending initial message");
-		}
 
-		socket.onmessage = function(message) {
-			data = JSON.parse(message.data);
-			if (data.registered) {
-				console.log("server registered me with id "+data.ID);
-				myID = data.ID;
+		$("#submit").click(function() {
+			if ($("#name").val() != "") {
+			$("#submit").remove();
+				var bullets = [];
+				var myID = -1;
+				var socket = new WebSocket("ws://localhost:5001/");
+				var pageHasFocus = true;
+				var inMemCanvas = document.createElement("canvas");
+				var width = 15;
+				var height = 10;
+				inMemCanvas.style.width = width+"px";
+				inMemCanvas.style.height = height+"px";
+				var ctxt = inMemCanvas.getContext("2d");
+				ctxt.attr
+				var imgData = ctxt.createImageData(width, height);
+	
+				socket.onopen = function () {
+					console.log("socket opened");
+					var msg = {newPlayer:true, name: $("#name").val()};
+					socket.send(JSON.stringify(msg));
+					console.log("sending initial message");
+				}
+
+				socket.onmessage = function(message) {
+					data = JSON.parse(message.data);
+					if (data.registered) {
+						console.log("server registered me with id "+data.ID);
+						myID = data.ID;
+						for(var i=0; i<imgData.data.length;i+=4) {
+						imgData.data[i+0] = ((myID%1)*250)%255;
+						imgData.data[i+1] = ((myID%2)*250)%255;
+						imgData.data[i+2] = ((myID%3)*250)%255;
+						imgData.data[i+3] = 255;
+				}
+
+				$(document).keydown(function(e) {
+					if (e.keyCode == 37) {
+						
+					}
+				});
+
+				ctxt.putImageData(imgData,0,0);
+					} else {
+						image = data;
+						var canvas = document.getElementById('canvas');
+						var context = canvas.getContext("2d");
+						if (data.orient == "down") {
+							context.clearRect(0, 0, canvas.width, canvas.height);
+							context.translate(data.X+width/2,data.Y-height/2);
+							context.rotate(Math.PI/2);
+							context.drawImage(inMemCanvas,0,0);
+							context.rotate(-Math.PI/2);
+							context.translate(-(data.X+width/2),-(data.Y-height/2));
+						} else if (data.orient == "up") {
+							context.clearRect(0, 0, canvas.width, canvas.height);
+							context.translate(data.X+width/2,data.Y-height/2);
+							context.rotate(Math.PI/2);
+							context.drawImage(inMemCanvas,0,0);
+							context.rotate(-Math.PI/2);
+							context.translate(-(data.X+width/2),-(data.Y-height/2));
+						} else if (data.orient == "right") {
+							context.clearRect(0, 0, canvas.width, canvas.height);
+							context.translate(data.X,data.Y);
+							context.drawImage(inMemCanvas,0,0);
+							context.translate(-(data.X),-(data.Y));
+						}
+					}
+				};
+				setInterval(function() {
+
+					if(pageHasFocus) socket.send(JSON.stringify({ping:true, ID: myID}));
+				},50);
+				var updateServer = function (keypresses,clicks) {
+					var data = {ID: myID, inputs: {keypresses: keypresses, clicks: clicks}};
+					socket.send(JSON.stringify(data));
+				}
+				$(window).blur(function() {
+					pageHasFocus =false;
+				});
+				$(window).focus(function() {
+					pageHasFocus =true;
+				});
+			
 			} else {
-				players = data.players;
-			}
-		};
-		setInterval(function() {
-			socket.send(JSON.stringify({ping:true, ID: myID}));
-		},500);
 
-		var updateServer = function (keypresses,clicks) {
-			var data = {ID: myID, inputs: {keypresses: keypresses, clicks: clicks}};
-			socket.send(JSON.stringify(data));
-		}
+			}
+		});
+
 	})
 	</script>
 	<script type="text/javascript" src="/r1"></script>
@@ -43,10 +104,11 @@
 </head>
 <body>
 <header>Welcome</header>
-<h1 id="push-test"></h1>
-<h1 id="reciever-test"></h1>
-<h1 id="processor-test"></h1>
-<canvas>
+<form>
+	<input type="text" name="name" id="name" placeholder="type username here"/>
+	<input type="submit" name="submit" id="submit" value="play" onclick="return false;">
+</form>
+<canvas id="canvas" width="500px" height="500px" style="border: 1px solid green;">
 	
 </canvas>
 </body>

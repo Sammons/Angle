@@ -5,7 +5,7 @@ var gameClientSettings = {
 }
 
 var rules ={
-	timeoutPlayers : true,
+	timeoutPlayers : false,
 	tickInterval : 40,
 	startX: 25,
 	startY: 25,
@@ -25,12 +25,13 @@ var physicsManager = function() {//tends to live inside playermanager
 	};
 	var motionSpeeds = {
 		fast : 10,
-		slow : 5
+		slow : 1
 	};
 	var pixel = function(x,y) {
 		this.x = x;
 		this.y = y;
 		this.owner = null;
+		this.type = null;
 	};
 	for (var i = worldMap.length - 1; i >= 0; i--) {
 		worldMap[i] = new Array(worldWidth);
@@ -40,35 +41,84 @@ var physicsManager = function() {//tends to live inside playermanager
 		 	worldMap[i][j] = new pixel(i,j);
 		 }
 	};
-	this.moveObject = function(object,collisionFunc) {
+	this.moveObject = function(object) {
+		if (!object.bodyPixels) return;
+		var speed;
 		if (object.moving) {
-			var speed = motionSpeeds[object.speed];
+			speed = motionSpeeds[object.speed];
+		} else {
+			speed = 0;
+		}
 			var MotionY = speed*Math.sin((object.theta/180)*Math.PI);
 			var MotionX = speed*Math.cos((object.theta/180)*Math.PI);
-			object.X += MotionX;
-			object.Y += MotionY;
-			for (var i = bodyPixels.length - 1; i >= 0; i--) {
-				if (bodyPixels[i] != null && worldMap[(bodyPixels[i].x+MotionX)%worldWidth][(bodyPixels[i].y+MotionY)%worldWidth].owner != object.id ) {
-					if (collisionFunc) {
-					collisionFunc(object,worldMap[(bodyPixels[i].x+MotionX)%worldWidth][(bodyPixels[i].y+MotionY)%worldWidth].owner);
-					}
-					console.log("collision between "+object.id+" and "+ worldMap[(bodyPixels[i].x+MotionX)%worldWidth][(bodyPixels[i].y+MotionY)%worldWidth].owner);
-					i = 0;
+			var collision = false;
+			for (var i = object.bodyPixels.length - 1; i >= 0; i--) {
+				var distance = Math.sqrt((object.bodyPixels[i].x-object.x)*(object.bodyPixels[i].x-object.x)+(object.bodyPixels[i].y-object.y)*(object.bodyPixels[i].y-object.y));
+				var newX = Math.floor((distance*Math.sin((object.theta/180)*Math.PI)+object.x+MotionX)%worldWidth);
+				var newY = Math.floor((distance*Math.cos((object.theta/180)*Math.PI)+object.y+MotionY)%worldWidth);
+				if (newX <= 0) newX = worldWidth-1;
+				if (newY <= 0) newY = worldWidth-1;
+				if (worldMap[newX][newY].owner != null && worldMap[newX][newY].owner != object.id) {
+				console.log("COLLISION");
+				return;
 				}
+			}
+			for (var i = object.bodyPixels.length - 1; i >= 0; i--) {
+				var distance = Math.sqrt((object.bodyPixels[i].x-object.x)*(object.bodyPixels[i].x-object.x)+(object.bodyPixels[i].y-object.y)*(object.bodyPixels[i].y-object.y));
+				var newX = Math.floor((distance*Math.sin((object.theta/180)*Math.PI)+object.x+MotionX)%worldWidth);
+				var newY = Math.floor((distance*Math.cos((object.theta/180)*Math.PI)+object.y+MotionY)%worldWidth);
+				if (newX <= 0) newX = worldWidth-1;
+				if (newY <= 0) newY = worldWidth-1;
+				worldMap[object.bodyPixels[i].x][object.bodyPixels[i].y].owner = null;
+				worldMap[object.bodyPixels[i].x][object.bodyPixels[i].y].type = null;
+				worldMap[newX][newY].owner = object.id;
+				worldMap[newX][newY].type = object.type;
+				object.bodyPixels[i].x = newX;
+				object.bodyPixels[i].y = newY;
 			};
-		}
+			object.x = (object.x + MotionX)%worldWidth;
+			object.y = (object.y + MotionY)%worldWidth;
+		
 		if (!motionTypes[object.motionType]) {
 			object.moving = false;
 		}
+	};
+	this.rotateObject = function(object,newTheta) {
 
+		if (!object.bodyPixels) return;
+			for (var i = object.bodyPixels.length - 1; i >= 0; i--) {
+				var distance = Math.sqrt((object.bodyPixels[i].x-object.x)*(object.bodyPixels[i].x-object.x)+(object.bodyPixels[i].y-object.y)*(object.bodyPixels[i].y-object.y));
+				var newX = Math.floor((distance*Math.sin((newTheta/180)*Math.PI)+object.x)%worldWidth);
+				var newY = Math.floor((distance*Math.cos((newTheta/180)*Math.PI)+object.y)%worldWidth);
+				if (newX <= 0) newX = worldWidth-1;
+				if (newY <= 0) newY = worldWidth-1;
+				if (worldMap[newX][newY].owner != null && worldMap[newX][newY].owner != object.id) {
+				console.log("COLLISION");
+				return;
+				}
+			}
+			object.theta = newTheta;
+			for (var i = object.bodyPixels.length - 1; i >= 0; i--) {
+				var distance = Math.sqrt((object.bodyPixels[i].x-object.x)*(object.bodyPixels[i].x-object.x)+(object.bodyPixels[i].y-object.y)*(object.bodyPixels[i].y-object.y));
+				var newX = Math.floor((distance*Math.sin((newTheta/180)*Math.PI)+object.x)%worldWidth);
+				var newY = Math.floor((distance*Math.cos((newTheta/180)*Math.PI)+object.y)%worldWidth);
+				if (newX <= 0) newX = worldWidth-1;
+				if (newY <= 0) newY = worldWidth-1;
+				worldMap[object.bodyPixels[i].x][object.bodyPixels[i].y].owner = null;
+				worldMap[object.bodyPixels[i].x][object.bodyPixels[i].y].type = null;
+				worldMap[newX][newY].owner = object.id;
+				worldMap[newX][newY].type = object.type;
+				object.bodyPixels[i].x = newX;
+				object.bodyPixels[i].y = newY;
+			};
 	};
 	this.createNewBlockData = function(object) {
 		var pixelArray = new Array(object.width*object.height*4);
 		for (var i = 0; i < pixelArray.length; i+=4) {
-			pixelArray[i] = object.R;
+			pixelArray[i+0] = object.R;
 			pixelArray[i+1] = object.G;
 			pixelArray[i+2] = object.B;
-			pixelArray[i+3] = object.A;
+			pixelArray[i+3] = 255;
 		};
 		object.imgData = pixelArray;
 	};
@@ -76,8 +126,23 @@ var physicsManager = function() {//tends to live inside playermanager
 		object.bodyPixels = [];
 		for (var i = object.width- 1; i >= 0; i--) {
 			for (var j = object.height -1 ; j >= 0; j--) {
+				if (worldMap[(i+object.x)%worldWidth][(j+object.y)%worldWidth].owner != null) {
+					console.log("COLLISION");
+					object.x = (object.x+15)%worldWidth;
+					object.y = (object.y+15)%worldWidth;
+					console.log("player relocated to "+ object.x+ " " + object.y);
+					while (object.bodyPixels.length > 0) {
+						var px =(object.bodyPixels.pop());
+						worldMap[px.x][px.y].owner = null;
+						worldMap[px.x][px.y].type = null;
+					}
+					i = object.width;
+					j = 0;
+				} else {
 				worldMap[(i+object.x)%worldWidth][(j+object.y)%worldWidth].owner = object.id;
+				worldMap[(i+object.x)%worldWidth][(j+object.y)%worldWidth].type = object.type;
 				object.bodyPixels.push({x: (i+object.x)%worldWidth , y: (j+object.y)%worldWidth});
+				}
 			}
 		};
 
@@ -106,6 +171,7 @@ var player = function(name,id) {
 	this.moving= false;
 	this.motionType = "halting";
 	this.speed = "slow";
+	this.type = "player";
 	physics.createBody(this);
 	physics.createNewBlockData(this);
 }; 
@@ -219,6 +285,12 @@ var playerManager = function(rules) {
 		return players;
 	};
 
+	this.modifyAllPlayers = function(f) {
+		for (var player in players){
+			f(players[player]);
+		}
+	};
+
 	this.processMessage = function(data) {
 		if (data.topic == "keydown")
 		{
@@ -257,12 +329,15 @@ exports.begin = function(wss){
 	console.log("game loop beginning, interval set to "+interval+" ms");
 	var network = new socketManager(wss, rules);
 	var playerMan = new playerManager(rules);
-	
+
 	setInterval(function() {
+		// playerMan.modifyAllPlayers(function(p) {
+		// 	physics.rotateObject(p,p.theta+1);
+		// });
 		network.pushOutMessageQ({topic: "rules", value: rules});//will become a full ruleset later
 		if (playerMan.getPlayerCount() > 0) {
 		network.pushOutMessageQ({topic: "players", value: playerMan.getPlayers()});//update clients
-		console.log("broadcasting players");
+		//console.log("broadcasting players");
 		} //if there are no players no one cares
 
 		network.drainIncMessageQ(function(data) {//process inputs

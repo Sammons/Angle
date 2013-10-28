@@ -11,11 +11,49 @@
 		var gameJoined = false;
 		var gameDetails = {};
 		var present = true;
+		var canvas = document.getElementById('canvas');
+		var context = canvas.getContext('2d');
+		var inMemCanvas = document.createElement("canvas");
+		 inMemCanvas.style.width = "15px";
+		 inMemCanvas.style.height = "10px";
+		var inMemContext = inMemCanvas.getContext("2d");
 		socket.onmessage = function(message) {
 			data = JSON.parse(message.data);
 			gameDetails[data["topic"]] = data["value"];
-			if (data.topic == "players") console.log(gameDetails.players[gameDetails.id]);//me
+			if (data.topic == "players")  {
+				var canvas = document.getElementById('canvas');
+				var context = canvas.getContext('2d');	
+				context.clearRect(0,0,canvas.width,canvas.height);
+				for (pk in data["value"]) {
+					if (pk != "count") {
+						var imgData=inMemContext.createImageData(15,10);
+						for (var i=0;i<imgData.data.length;i+=4)
+						{
+							imgData.data[i+0]=data["value"][pk].imgData[i+0];
+							imgData.data[i+1]=data["value"][pk].imgData[i+1];
+							imgData.data[i+2]=data["value"][pk].imgData[i+2];
+							imgData.data[i+3]=data["value"][pk].imgData[i+3];
+						}
+						imgData.data = data["value"][pk].imgData;
+						inMemContext.putImageData(imgData,0,0);
+						renderPlayer(data["value"][pk],context,inMemCanvas);
+					}
+				}
+			}
 		};
+		function renderPlayer (player,context,image) {
+			context.translate(player.x,player.y);
+			context.rotate(player.theta/180*Math.PI);
+			context.drawImage(image,0,0);
+			context.rotate(-player.theta/180*Math.PI);
+			context.translate(-(player.x),-(player.y));
+			for (var i = player.bodyPixels.length - 1; i >= 0; i--) {
+				console.log(player.bodyPixels[i].x);
+				context.fillRect(player.bodyPixels[i].x,player.bodyPixels[i].y,2,2);
+			};
+			//context.fillRect(player.bodyPixels[player.bodyPixels.length-1].x,player.bodyPixels[player.bodyPixels.length-1].y,1,1);
+			//context.fillRect(player.bodyPixels[0].x,player.bodyPixels[0].y,1,1);
+		}
 		var sendMessage = function(message) {
 			message["sent"] = Date.now();
 			var d = JSON.stringify(message);

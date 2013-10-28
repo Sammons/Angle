@@ -25,7 +25,7 @@ var physicsManager = function() {//tends to live inside playermanager
 	};
 	var motionSpeeds = {
 		fast : 10,
-		slow : 1
+		slow : 5
 	};
 	var pixel = function(x,y) {
 		this.x = x;
@@ -49,35 +49,42 @@ var physicsManager = function() {//tends to live inside playermanager
 		} else {
 			speed = 0;
 		}
-			var MotionY = speed*Math.sin((object.theta/180)*Math.PI);
-			var MotionX = speed*Math.cos((object.theta/180)*Math.PI);
-			var collision = false;
+			var netM = speed;
+			var xm = Math.sin(object.theta*0.0174532925)*speed;
+			var ym = Math.cos(object.theta*0.0174532925)*speed;
 			for (var i = object.bodyPixels.length - 1; i >= 0; i--) {
-				var distance = Math.sqrt((object.bodyPixels[i].x-object.x)*(object.bodyPixels[i].x-object.x)+(object.bodyPixels[i].y-object.y)*(object.bodyPixels[i].y-object.y));
-				var newX = Math.floor((distance*Math.sin((object.theta/180)*Math.PI)+object.x+MotionX)%worldWidth);
-				var newY = Math.floor((distance*Math.cos((object.theta/180)*Math.PI)+object.y+MotionY)%worldWidth);
+				var newX = object.bodyPixels[i].x + xm;
+				var newY = object.bodyPixels[i].y + ym;
+				newX %= worldWidth;
+				newY %= worldWidth;
 				if (newX <= 0) newX = worldWidth-1;
 				if (newY <= 0) newY = worldWidth-1;
-				if (worldMap[newX][newY].owner != null && worldMap[newX][newY].owner != object.id) {
-				console.log("COLLISION");
-				return;
+				var fx = Math.floor(newX);
+				var fy = Math.floor(newY);
+				if (worldMap[fx][fy].owner != null && worldMap[fx][fy].owner != object.id) {
+					console.log("collision");
+					return;
 				}
-			}
+			};
+
 			for (var i = object.bodyPixels.length - 1; i >= 0; i--) {
-				var distance = Math.sqrt((object.bodyPixels[i].x-object.x)*(object.bodyPixels[i].x-object.x)+(object.bodyPixels[i].y-object.y)*(object.bodyPixels[i].y-object.y));
-				var newX = Math.floor((distance*Math.sin((object.theta/180)*Math.PI)+object.x+MotionX)%worldWidth);
-				var newY = Math.floor((distance*Math.cos((object.theta/180)*Math.PI)+object.y+MotionY)%worldWidth);
+				var newX = object.bodyPixels[i].x + xm;
+				var newY = object.bodyPixels[i].y + ym;
+				newX %= worldWidth;
+				newY %= worldWidth;
 				if (newX <= 0) newX = worldWidth-1;
 				if (newY <= 0) newY = worldWidth-1;
-				worldMap[object.bodyPixels[i].x][object.bodyPixels[i].y].owner = null;
-				worldMap[object.bodyPixels[i].x][object.bodyPixels[i].y].type = null;
-				worldMap[newX][newY].owner = object.id;
-				worldMap[newX][newY].type = object.type;
+				var fx = Math.floor(newX);
+				var fy = Math.floor(newY);
+				worldMap[Math.floor(object.bodyPixels[i].x)][Math.floor(object.bodyPixels[i].y)].owner = null;
+				worldMap[Math.floor(object.bodyPixels[i].x)][Math.floor(object.bodyPixels[i].y)].type = null;
+				worldMap[fx][fy].owner = object.id;
+				worldMap[fy][fx].type = object.type;
 				object.bodyPixels[i].x = newX;
 				object.bodyPixels[i].y = newY;
 			};
-			object.x = (object.x + MotionX)%worldWidth;
-			object.y = (object.y + MotionY)%worldWidth;
+			object.x = (object.x + xm)%worldWidth;
+			object.y = (object.y + ym)%worldWidth;
 		
 		if (!motionTypes[object.motionType]) {
 			object.moving = false;
@@ -132,6 +139,8 @@ var physicsManager = function() {//tends to live inside playermanager
 			object.bodyPixels[i].x = newX;
 			object.bodyPixels[i].y = newY;
 		};
+		object.netTheta += object.theta;
+		object.theta = 0;
 	};
 	this.createNewBlockData = function(object) {
 		var pixelArray = new Array(object.width*object.height*4);
@@ -147,7 +156,7 @@ var physicsManager = function() {//tends to live inside playermanager
 		object.bodyPixels = [];
 		for (var i = object.width- 1; i >= 0; i--) {
 			for (var j = object.height -1 ; j >= 0; j--) {
-				if (worldMap[(i+object.x)%worldWidth][(j+object.y)%worldWidth].owner != null) {
+				if (worldMap[(i+object.x)%worldWidth][(j+object.y)%worldWidth].owner != null && worldMap[(i+object.x)%worldWidth][(j+object.y)%worldWidth].owner != object.id) {
 					console.log("COLLISION");
 					object.x = (object.x+15)%worldWidth;
 					object.y = (object.y+15)%worldWidth;
@@ -193,6 +202,7 @@ var player = function(name,id) {
 	this.motionType = "halting";
 	this.speed = "slow";
 	this.type = "player";
+	this.netTheta = 0;
 	physics.createBody(this);
 	physics.createNewBlockData(this);
 }; 
@@ -315,6 +325,9 @@ var playerManager = function(rules) {
 	this.processMessage = function(data) {
 		if (data.topic == "keydown")
 		{
+			if (data.value == 85) {
+				players[data.id].moving = true;
+			}
 			//game engine commands
 		}
 		else if (data.topic == "connected")
@@ -353,13 +366,16 @@ exports.begin = function(wss){
 
 	setInterval(function() {
 		playerMan.modifyAllPlayers(function(p) {
-			if (p.theta == 0) p.theta = 15;
-			//physics.rotateObject(p);
-			p.moving = true;
 			physics.moveObject(p);
+			physics.rotateObject(p);
 		});
-	},50)
+	},40)
 		
+	setInterval(function() {
+		playerMan.modifyAllPlayers(function(p) {
+			physics.createBody(p);
+		});
+	},3000)
 
 	setInterval(function() {
 		network.pushOutMessageQ({topic: "rules", value: rules});//will become a full ruleset later

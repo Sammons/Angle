@@ -50,7 +50,6 @@
 			context.rotate(-player.theta/180*Math.PI);
 			context.translate(-(player.x),-(player.y));
 			for (var i = player.bodyPixels.length - 1; i >= 0; i--) {
-				console.log(player.bodyPixels[i].x + " " + player.bodyPixels[i].y);
 				context.fillRect(player.bodyPixels[i].x,player.bodyPixels[i].y,1,1);
 			};
 			//context.fillRect(player.bodyPixels[player.bodyPixels.length-1].x,player.bodyPixels[player.bodyPixels.length-1].y,1,1);

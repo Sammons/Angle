@@ -83,15 +83,17 @@ var physicsManager = function() {//tends to live inside playermanager
 			object.moving = false;
 		}
 	};
-	this.rotateObject = function(object) {
+
+	this.rotateObject = function(object,players) {
 		if (!object.bodyPixels) return;
 		for (var i = object.bodyPixels.length - 1; i >= 0; i--) {
 			var curPixel = object.bodyPixels[i];
 			var rootPixel = object.bodyPixels[object.bodyPixels.length-1];//pivot
 			var baseX = curPixel.x-rootPixel.x;
 			var baseY = curPixel.y-rootPixel.y;
-			var s = Math.sin(object.theta);
-			var c = Math.sin(object.theta);
+			var root2 = 1.41421356237;
+			var s = Math.sin(object.theta*0.0174532925)*1.00000381469;//1+ 2^-18
+			var c = Math.cos(object.theta*0.0174532925)*1.00000381469;
 			var newX = (baseX * c - baseY*s)+rootPixel.x;
 			var newY = (baseX * s + baseY*c)+rootPixel.y;
 			newX %= worldWidth;
@@ -101,19 +103,22 @@ var physicsManager = function() {//tends to live inside playermanager
 			var fx = Math.floor(newX);
 			var fy = Math.floor(newY);
 			if (worldMap[fx][fy].owner != null && worldMap[fx][fy].owner != object.id) {
-				console.log("collistion");
+				console.log("collision");
+				object.theta = -(object.theta/2);
 				return;
 			}
 		}
+
 		for (var i = object.bodyPixels.length - 2; i >= 0; i--) {
 			var curPixel = object.bodyPixels[i];
 			var rootPixel = object.bodyPixels[object.bodyPixels.length-1];//pivot
 			var baseX = curPixel.x-rootPixel.x;
 			var baseY = curPixel.y-rootPixel.y;
-			var s = Math.round(Math.sin((object.theta/180)*Math.PI));
-			var c = Math.round(Math.sin((object.theta/180)*Math.PI));
-			var newX = (baseX * c - baseY*s)+25;
-			var newY = (baseX * s + baseY*c)+25;
+			var root2 = 1.41421356237;
+			var s = Math.sin(object.theta*0.0174532925)*1.00000381469;//1+ 2^-18
+			var c = Math.cos(object.theta*0.0174532925)*1.00000381469;
+			var newX = (baseX * c - baseY*s)+rootPixel.x;
+			var newY = (baseX * s + baseY*c)+rootPixel.y;
 			newX %= worldWidth;
 			newY %= worldWidth;
 			if (newX <= 0) newX += worldWidth-1;
@@ -124,8 +129,8 @@ var physicsManager = function() {//tends to live inside playermanager
 			worldMap[Math.floor(curPixel.x)][Math.floor(curPixel.y)].type = null;
 			worldMap[fx][fy].owner = object.id;
 			worldMap[fx][fy].type = object.type;
-			object.bodyPixels[i].x = fx;
-			object.bodyPixels[i].y = fy;
+			object.bodyPixels[i].x = newX;
+			object.bodyPixels[i].y = newY;
 		};
 	};
 	this.createNewBlockData = function(object) {
@@ -348,10 +353,12 @@ exports.begin = function(wss){
 
 	setInterval(function() {
 		playerMan.modifyAllPlayers(function(p) {
-			if (p.theta == 0) p.theta = 45;
-			physics.rotateObject(p);
+			if (p.theta == 0) p.theta = 15;
+			//physics.rotateObject(p);
+			p.moving = true;
+			physics.moveObject(p);
 		});
-	},1000)
+	},50)
 		
 
 	setInterval(function() {

@@ -83,34 +83,50 @@ var physicsManager = function() {//tends to live inside playermanager
 			object.moving = false;
 		}
 	};
-	this.rotateObject = function(object,newTheta) {
-
+	this.rotateObject = function(object) {
 		if (!object.bodyPixels) return;
-			for (var i = object.bodyPixels.length - 1; i >= 0; i--) {
-				var distance = Math.sqrt((object.bodyPixels[i].x-object.x)*(object.bodyPixels[i].x-object.x)+(object.bodyPixels[i].y-object.y)*(object.bodyPixels[i].y-object.y));
-				var newX = Math.floor((distance*Math.sin((newTheta/180)*Math.PI)+object.x)%worldWidth);
-				var newY = Math.floor((distance*Math.cos((newTheta/180)*Math.PI)+object.y)%worldWidth);
-				if (newX <= 0) newX = worldWidth-1;
-				if (newY <= 0) newY = worldWidth-1;
-				if (worldMap[newX][newY].owner != null && worldMap[newX][newY].owner != object.id) {
-				console.log("COLLISION");
+		for (var i = object.bodyPixels.length - 1; i >= 0; i--) {
+			var curPixel = object.bodyPixels[i];
+			var rootPixel = object.bodyPixels[object.bodyPixels.length-1];//pivot
+			var baseX = curPixel.x-rootPixel.x;
+			var baseY = curPixel.y-rootPixel.y;
+			var s = Math.sin(object.theta);
+			var c = Math.sin(object.theta);
+			var newX = (baseX * c - baseY*s)+rootPixel.x;
+			var newY = (baseX * s + baseY*c)+rootPixel.y;
+			newX %= worldWidth;
+			newY %= worldWidth;
+			if (newX <= 0) newX += worldWidth-1;
+			if (newY <= 0) newY	+= worldWidth-1;
+			var fx = Math.floor(newX);
+			var fy = Math.floor(newY);
+			if (worldMap[fx][fy].owner != null && worldMap[fx][fy].owner != object.id) {
+				console.log("collistion");
 				return;
-				}
 			}
-			object.theta = newTheta;
-			for (var i = object.bodyPixels.length - 1; i >= 0; i--) {
-				var distance = Math.sqrt((object.bodyPixels[i].x-object.x)*(object.bodyPixels[i].x-object.x)+(object.bodyPixels[i].y-object.y)*(object.bodyPixels[i].y-object.y));
-				var newX = Math.floor((distance*Math.sin((newTheta/180)*Math.PI)+object.x)%worldWidth);
-				var newY = Math.floor((distance*Math.cos((newTheta/180)*Math.PI)+object.y)%worldWidth);
-				if (newX <= 0) newX = worldWidth-1;
-				if (newY <= 0) newY = worldWidth-1;
-				worldMap[object.bodyPixels[i].x][object.bodyPixels[i].y].owner = null;
-				worldMap[object.bodyPixels[i].x][object.bodyPixels[i].y].type = null;
-				worldMap[newX][newY].owner = object.id;
-				worldMap[newX][newY].type = object.type;
-				object.bodyPixels[i].x = newX;
-				object.bodyPixels[i].y = newY;
-			};
+		}
+		for (var i = object.bodyPixels.length - 2; i >= 0; i--) {
+			var curPixel = object.bodyPixels[i];
+			var rootPixel = object.bodyPixels[object.bodyPixels.length-1];//pivot
+			var baseX = curPixel.x-rootPixel.x;
+			var baseY = curPixel.y-rootPixel.y;
+			var s = Math.round(Math.sin((object.theta/180)*Math.PI));
+			var c = Math.round(Math.sin((object.theta/180)*Math.PI));
+			var newX = (baseX * c - baseY*s)+25;
+			var newY = (baseX * s + baseY*c)+25;
+			newX %= worldWidth;
+			newY %= worldWidth;
+			if (newX <= 0) newX += worldWidth-1;
+			if (newY <= 0) newY	+= worldWidth-1;
+			var fx = Math.floor(newX);
+			var fy = Math.floor(newY);
+			worldMap[Math.floor(curPixel.x)][Math.floor(curPixel.y)].owner = null;
+			worldMap[Math.floor(curPixel.x)][Math.floor(curPixel.y)].type = null;
+			worldMap[fx][fy].owner = object.id;
+			worldMap[fx][fy].type = object.type;
+			object.bodyPixels[i].x = fx;
+			object.bodyPixels[i].y = fy;
+		};
 	};
 	this.createNewBlockData = function(object) {
 		var pixelArray = new Array(object.width*object.height*4);
@@ -331,9 +347,14 @@ exports.begin = function(wss){
 	var playerMan = new playerManager(rules);
 
 	setInterval(function() {
-		// playerMan.modifyAllPlayers(function(p) {
-		// 	physics.rotateObject(p,p.theta+1);
-		// });
+		playerMan.modifyAllPlayers(function(p) {
+			if (p.theta == 0) p.theta = 45;
+			physics.rotateObject(p);
+		});
+	},1000)
+		
+
+	setInterval(function() {
 		network.pushOutMessageQ({topic: "rules", value: rules});//will become a full ruleset later
 		if (playerMan.getPlayerCount() > 0) {
 		network.pushOutMessageQ({topic: "players", value: playerMan.getPlayers()});//update clients

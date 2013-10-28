@@ -12,10 +12,12 @@
 		var gameDetails = {};
 		var present = true;
 		var canvas = document.getElementById('canvas');
+		canvas.width = 500;
+		canvas.height = 500;
 		var context = canvas.getContext('2d');
 		var inMemCanvas = document.createElement("canvas");
-		 inMemCanvas.style.width = "15px";
-		 inMemCanvas.style.height = "10px";
+		 inMemCanvas.width = 25;
+		 inMemCanvas.height = 10;
 		var inMemContext = inMemCanvas.getContext("2d");
 		socket.onmessage = function(message) {
 			data = JSON.parse(message.data);
@@ -48,8 +50,8 @@
 			context.rotate(-player.theta/180*Math.PI);
 			context.translate(-(player.x),-(player.y));
 			for (var i = player.bodyPixels.length - 1; i >= 0; i--) {
-				console.log(player.bodyPixels[i].x);
-				context.fillRect(player.bodyPixels[i].x,player.bodyPixels[i].y,2,2);
+				console.log(player.bodyPixels[i].x + " " + player.bodyPixels[i].y);
+				context.fillRect(player.bodyPixels[i].x,player.bodyPixels[i].y,1,1);
 			};
 			//context.fillRect(player.bodyPixels[player.bodyPixels.length-1].x,player.bodyPixels[player.bodyPixels.length-1].y,1,1);
 			//context.fillRect(player.bodyPixels[0].x,player.bodyPixels[0].y,1,1);

@@ -156,7 +156,8 @@ var physicsManager = function() {//tends to live inside playermanager
 		object.bodyPixels = [];
 		for (var i = object.width- 1; i >= 0; i--) {
 			for (var j = object.height -1 ; j >= 0; j--) {
-				if (worldMap[(i+object.x)%worldWidth][(j+object.y)%worldWidth].owner != null && worldMap[(i+object.x)%worldWidth][(j+object.y)%worldWidth].owner != object.id) {
+				if (worldMap[(i+Math.floor(object.x))%worldWidth][(j+Math.floor(object.y))%worldWidth].owner != null &&
+				 worldMap[(i+Math.floor(object.x))%worldWidth][(j+Math.floor(object.y))%worldWidth].owner != object.id) {
 					console.log("COLLISION");
 					object.x = (object.x+15)%worldWidth;
 					object.y = (object.y+15)%worldWidth;
@@ -169,9 +170,9 @@ var physicsManager = function() {//tends to live inside playermanager
 					i = object.width;
 					j = 0;
 				} else {
-				worldMap[(i+object.x)%worldWidth][(j+object.y)%worldWidth].owner = object.id;
-				worldMap[(i+object.x)%worldWidth][(j+object.y)%worldWidth].type = object.type;
-				object.bodyPixels.push({x: (i+object.x)%worldWidth , y: (j+object.y)%worldWidth});
+				worldMap[(i+Math.floor(object.x))%worldWidth][(j+Math.floor(object.y))%worldWidth].owner = object.id;
+				worldMap[(i+Math.floor(object.x))%worldWidth][(j+Math.floor(object.y))%worldWidth].type = object.type;
+				object.bodyPixels.push({x: (i+Math.floor(object.x))%worldWidth , y: (j+Math.floor(object.y))%worldWidth});
 				}
 			}
 		};
@@ -326,6 +327,9 @@ var playerManager = function(rules) {
 		if (data.topic == "keydown")
 		{
 			if (data.value == 85) {
+				players[data.id].theta = 15;
+			}
+			if (data.value == 79) {
 				players[data.id].moving = true;
 			}
 			//game engine commands
@@ -373,6 +377,9 @@ exports.begin = function(wss){
 		
 	setInterval(function() {
 		playerMan.modifyAllPlayers(function(p) {
+			p.theta = 0;
+			p.netTheta =0;
+			physics.rotateObject(p);
 			physics.createBody(p);
 		});
 	},3000)

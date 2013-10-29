@@ -8,19 +8,17 @@ exports.GameCore = function(SocketManager,ObjectManager) {
 	var started = false;
 	var sendInterval = 40;
 	var timeoutInterval = 750;
+	var timeoutCommandInterval = 500;
 	var timeoutCheckInterval = 100;
 	var physics = new PhysicsManager();
-	var types = {
-		"player" : function() {
 
-		},
-		"bullet" : function() {
-
-		};
-	}
 	this.createObject = function(type) {
 		return new types[type]();
 	};
+
+	this.getTimeoutCommandInterval = function() {
+		return timeoutCommandInterval;
+	}
 
 	this.started = function() {
 		return started;
@@ -45,7 +43,7 @@ exports.GameCore = function(SocketManager,ObjectManager) {
 			console.log(obj);
 		}
 	}
-	var process = function() {
+	var process = function() {//game loop =P
 		load = Date.now();
 		physics.move(ObjectManager.getObjects());
 		load = Date.now()-load;

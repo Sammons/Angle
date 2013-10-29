@@ -6,7 +6,7 @@
 	<script type="text/javascript">
 	//top level things
 	$(document).ready(function() {
-		var socket = new WebSocket("ws://localhost:5001/");
+		var socket = new WebSocket("ws://localhost:3001/");
 		var beginRendering = false;
 		var gameJoined = false;
 		var gameDetails = {};
@@ -49,22 +49,22 @@
 			context.drawImage(image,0,0);
 			context.rotate(-player.netTheta/180*Math.PI);
 			context.translate(-(player.x),-(player.y));
-			for (var i = player.bodyPixels.length - 1; i >= 0; i--) {
-				context.fillRect(player.bodyPixels[i].x,player.bodyPixels[i].y,1,1);
-			};
+			// for (var i = player.bodyPixels.length - 1; i >= 0; i--) {
+			// 	context.fillRect(player.bodyPixels[i].x,player.bodyPixels[i].y,1,1);
+			// };
 			//context.fillRect(player.bodyPixels[player.bodyPixels.length-1].x,player.bodyPixels[player.bodyPixels.length-1].y,1,1);
 			//context.fillRect(player.bodyPixels[0].x,player.bodyPixels[0].y,1,1);
 		}
 		var sendMessage = function(message) {
 			message["sent"] = Date.now();
 			var d = JSON.stringify(message);
-			socket.send(d);
+			(socket.send(d));
 		};
 		
 
 		$("#submit").click(function() {
 			//$("#submit").remove();
-
+			console.log("button clikced")
 				//just once, send beginning info
 				var intro = {
 					"topic" : "intro",
@@ -85,7 +85,7 @@
 					var msg ={"topic" : "heartbeat", "value" : "alive"};
 					if (present) sendMessage(msg);
 				},50);
-				if (gameDetails.rules.timeoutPlayers) {
+				if (false) {
 
 					$(window).blur(function() {
 						present = false;

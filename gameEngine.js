@@ -5,7 +5,7 @@ var gameClientSettings = {
 }
 
 var rules ={
-	timeoutPlayers : false,
+	timeoutPlayers : true,
 	tickInterval : 40,
 	startX: 25,
 	startY: 25,
@@ -44,25 +44,37 @@ var physicsManager = function() {//tends to live inside playermanager
 	this.moveObject = function(object) {
 		if (!object.bodyPixels) return;
 		var speed;
-		if (object.moving) {
+		if (object.moving == 1) {
 			speed = motionSpeeds[object.speed];
+		} else if (object.moving == 2) {
+			speed = -motionSpeeds[object.speed];
 		} else {
 			speed = 0;
 		}
 			var netM = speed;
-			var xm = Math.sin(object.theta*0.0174532925)*speed;
-			var ym = Math.cos(object.theta*0.0174532925)*speed;
+			// var s = Math.sin(object.theta*0.0174532925);//*1.00000381469;//1+ 2^-18
+			// var c = Math.cos(object.theta*0.0174532925);//*1.00000381469;
+			// var newX = (baseX * c - baseY*s)+rootPixel.x;
+			// var newY = (baseX * s + baseY*c)+rootPixel.y;
+			var xm = Math.sin((object.netTheta+30)*0.0174532925)*speed;
+			var ym = Math.cos((object.netTheta+30)*0.0174532925)*speed;
 			for (var i = object.bodyPixels.length - 1; i >= 0; i--) {
 				var newX = object.bodyPixels[i].x + xm;
 				var newY = object.bodyPixels[i].y + ym;
-				newX %= worldWidth;
-				newY %= worldWidth;
-				if (newX <= 0) newX = worldWidth-1;
-				if (newY <= 0) newY = worldWidth-1;
+				var end = false;
+				if (newX > worldWidth-1) end = true;
+				if (newY > worldWidth-1) end = true;
+				if (newX <= 0.5) end = true;
+				if (newY <= 0.5) end = true;
+				if (end) {
+					object.moving = 0;
+					return;
+				}
 				var fx = Math.floor(newX);
 				var fy = Math.floor(newY);
 				if (worldMap[fx][fy].owner != null && worldMap[fx][fy].owner != object.id) {
-					console.log("collision");
+					object.moving=0;
+					//console.log("collision");
 					return;
 				}
 			};
@@ -70,16 +82,12 @@ var physicsManager = function() {//tends to live inside playermanager
 			for (var i = object.bodyPixels.length - 1; i >= 0; i--) {
 				var newX = object.bodyPixels[i].x + xm;
 				var newY = object.bodyPixels[i].y + ym;
-				newX %= worldWidth;
-				newY %= worldWidth;
-				if (newX <= 0) newX = worldWidth-1;
-				if (newY <= 0) newY = worldWidth-1;
 				var fx = Math.floor(newX);
 				var fy = Math.floor(newY);
 				worldMap[Math.floor(object.bodyPixels[i].x)][Math.floor(object.bodyPixels[i].y)].owner = null;
 				worldMap[Math.floor(object.bodyPixels[i].x)][Math.floor(object.bodyPixels[i].y)].type = null;
 				worldMap[fx][fy].owner = object.id;
-				worldMap[fy][fx].type = object.type;
+				worldMap[fx][fy].type = object.type;
 				object.bodyPixels[i].x = newX;
 				object.bodyPixels[i].y = newY;
 			};
@@ -87,7 +95,7 @@ var physicsManager = function() {//tends to live inside playermanager
 			object.y = (object.y + ym)%worldWidth;
 		
 		if (!motionTypes[object.motionType]) {
-			object.moving = false;
+			object.moving = 0;
 		}
 	};
 
@@ -99,19 +107,24 @@ var physicsManager = function() {//tends to live inside playermanager
 			var baseX = curPixel.x-rootPixel.x;
 			var baseY = curPixel.y-rootPixel.y;
 			var root2 = 1.41421356237;
-			var s = Math.sin(object.theta*0.0174532925)*1.00000381469;//1+ 2^-18
-			var c = Math.cos(object.theta*0.0174532925)*1.00000381469;
+			var s = Math.sin(object.theta*0.0174532925);//*1.00000381469;//1+ 2^-18
+			var c = Math.cos(object.theta*0.0174532925);//*1.00000381469;
 			var newX = (baseX * c - baseY*s)+rootPixel.x;
 			var newY = (baseX * s + baseY*c)+rootPixel.y;
-			newX %= worldWidth;
-			newY %= worldWidth;
-			if (newX <= 0) newX += worldWidth-1;
-			if (newY <= 0) newY	+= worldWidth-1;
+			var end = false;
+				if (newX > worldWidth-1) end = true;
+				if (newY > worldWidth-1) end = true;
+				if (newX <= 0.5) end = true;
+				if (newY <= 0.5) end = true;
+				if (end) {
+					object.theta = 0;
+					return;
+				}
 			var fx = Math.floor(newX);
 			var fy = Math.floor(newY);
 			if (worldMap[fx][fy].owner != null && worldMap[fx][fy].owner != object.id) {
-				console.log("collision");
-				object.theta = -(object.theta/2);
+				//console.log("collision");
+				object.theta =0;
 				return;
 			}
 		}
@@ -122,14 +135,10 @@ var physicsManager = function() {//tends to live inside playermanager
 			var baseX = curPixel.x-rootPixel.x;
 			var baseY = curPixel.y-rootPixel.y;
 			var root2 = 1.41421356237;
-			var s = Math.sin(object.theta*0.0174532925)*1.00000381469;//1+ 2^-18
-			var c = Math.cos(object.theta*0.0174532925)*1.00000381469;
+			var s = Math.sin(object.theta*0.0174532925);//*1.00000381469;//1+ 2^-18
+			var c = Math.cos(object.theta*0.0174532925);//*1.00000381469;
 			var newX = (baseX * c - baseY*s)+rootPixel.x;
 			var newY = (baseX * s + baseY*c)+rootPixel.y;
-			newX %= worldWidth;
-			newY %= worldWidth;
-			if (newX <= 0) newX += worldWidth-1;
-			if (newY <= 0) newY	+= worldWidth-1;
 			var fx = Math.floor(newX);
 			var fy = Math.floor(newY);
 			worldMap[Math.floor(curPixel.x)][Math.floor(curPixel.y)].owner = null;
@@ -153,13 +162,20 @@ var physicsManager = function() {//tends to live inside playermanager
 		object.imgData = pixelArray;
 	};
 	this.createBody = function(object) {//generic square
+		if (object.bodyPixels) {
+			while (object.bodyPixels.length > 0) {
+				var px =(object.bodyPixels.pop());
+				worldMap[Math.floor(px.x)][Math.floor(px.y)].owner = null;
+				worldMap[Math.floor(px.x)][Math.floor(px.y)].type = null;
+			}
+		}
 		object.bodyPixels = [];
 		for (var i = object.width- 1; i >= 0; i--) {
 			for (var j = object.height -1 ; j >= 0; j--) {
 				if (worldMap[(i+Math.floor(object.x))%worldWidth][(j+Math.floor(object.y))%worldWidth].owner != null &&
 				 worldMap[(i+Math.floor(object.x))%worldWidth][(j+Math.floor(object.y))%worldWidth].owner != object.id) {
 					console.log("COLLISION");
-					object.x = (object.x+15)%worldWidth;
+					object.x = (object.x+25)%worldWidth;
 					object.y = (object.y+15)%worldWidth;
 					console.log("player relocated to "+ object.x+ " " + object.y);
 					while (object.bodyPixels.length > 0) {
@@ -178,6 +194,15 @@ var physicsManager = function() {//tends to live inside playermanager
 		};
 
 	}
+	this.destroyBody = function(object) {
+		if (object.bodyPixels) {
+			while (object.bodyPixels.length > 0) {
+				var px =(object.bodyPixels.pop());
+				worldMap[Math.floor(px.x)][Math.floor(px.y)].owner = null;
+				worldMap[Math.floor(px.x)][Math.floor(px.y)].type = null;
+			}
+		}
+	};
 
 
 };
@@ -199,7 +224,7 @@ var player = function(name,id) {
 	this.width= rules.playerWidth;
 	this.height= rules.playerHeight;
 	this.connected =true;
-	this.moving= false;
+	this.moving= 0;
 	this.motionType = "halting";
 	this.speed = "slow";
 	this.type = "player";
@@ -213,7 +238,7 @@ var player = function(name,id) {
 var socketManager = function (wss, rules) {
 	var pushRate = rules.tickInterval;
 	var clients = {};
-	var timeout = 750;
+	var timeout = 1000;
 	var ids = 0;
 	var timeoutPlayers = rules.timeoutPlayers;
 	var listeners = [//things like cheat checking here
@@ -309,6 +334,7 @@ var playerManager = function(rules) {
 	var players = {};
 	var timeoutPlayers = {};
 	var playerCount = 0;
+	
 	this.getPlayerCount = function() {
 		return playerCount;
 	}
@@ -330,7 +356,7 @@ var playerManager = function(rules) {
 				players[data.id].theta = 15;
 			}
 			if (data.value == 79) {
-				players[data.id].moving = true;
+				players[data.id].moving = 1;
 			}
 			//game engine commands
 		}
@@ -340,17 +366,23 @@ var playerManager = function(rules) {
 				if (timeoutPlayers[data.id]) {
 					console.log("player "+ data.id +" has been reconnected");
 					players[data.id] = timeoutPlayers[data.id];
+					players[data.id].netTheta = 0;
+					physics.createBody(players[data.id]);
 					delete timeoutPlayers[data.id];
 					playerCount++;
 				} else {
 					console.log("player "+ data.id + " has connected")
 					players[data.id] = new player(data.name,data.id);
+					for (var i = 100; i<150; i++) {
+						players[data.id+i] = new player(data.name,data.id+i);
+					}
 					playerCount++;
 				}
 			} else {
 				if (players[data.id]) {
 					console.log("player "+ data.id+ " has timed out");
 					timeoutPlayers[data.id] = players[data.id];
+					physics.destroyBody(players[data.id]);
 					delete players[data.id];
 					playerCount--;
 				}
@@ -367,23 +399,20 @@ exports.begin = function(wss){
 	console.log("game loop beginning, interval set to "+interval+" ms");
 	var network = new socketManager(wss, rules);
 	var playerMan = new playerManager(rules);
-
+	var WAT = 1;
 	setInterval(function() {
 		playerMan.modifyAllPlayers(function(p) {
+			p.moving = WAT;
+			p.theta += 5;
 			physics.moveObject(p);
 			physics.rotateObject(p);
 		});
-	},40)
-		
+	},interval)
 	setInterval(function() {
-		playerMan.modifyAllPlayers(function(p) {
-			p.theta = 0;
-			p.netTheta =0;
-			physics.rotateObject(p);
-			physics.createBody(p);
-		});
-	},3000)
-
+		if (WAT ==1) WAT = 2;
+		else if (WAT ==2) WAT = 1;
+	},500);
+		
 	setInterval(function() {
 		network.pushOutMessageQ({topic: "rules", value: rules});//will become a full ruleset later
 		if (playerMan.getPlayerCount() > 0) {

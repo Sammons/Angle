@@ -41,7 +41,8 @@ var physicsManager = function() {//tends to live inside playermanager
 		 	worldMap[i][j] = new pixel(i,j);
 		 }
 	};
-	this.moveObject = function(object) {
+
+	this.moveObject = function(object,players) {
 		if (!object.bodyPixels) return;
 		var speed;
 		if (object.moving == 1) {
@@ -67,6 +68,7 @@ var physicsManager = function() {//tends to live inside playermanager
 				if (newX <= 0.5) end = true;
 				if (newY <= 0.5) end = true;
 				if (end) {
+					if (object.type=="bullet") object.dead = true;
 					object.moving = 0;
 					return;
 				}
@@ -74,6 +76,12 @@ var physicsManager = function() {//tends to live inside playermanager
 				var fy = Math.floor(newY);
 				if (worldMap[fx][fy].owner != null && worldMap[fx][fy].owner != object.id) {
 					object.moving=0;
+					var die = (object.type == "bullet" || players[worldMap[fx][fy].owner].type == "bullet");
+					if (die) {
+						object.dead = true;
+						players[worldMap[fx][fy].owner].dead = true;
+						return;
+					}
 					//console.log("collision");
 					return;
 				}
@@ -117,6 +125,7 @@ var physicsManager = function() {//tends to live inside playermanager
 				if (newX <= 0.5) end = true;
 				if (newY <= 0.5) end = true;
 				if (end) {
+					if (object.type=="bullet") object.dead = true;
 					object.theta = 0;
 					return;
 				}
@@ -175,8 +184,8 @@ var physicsManager = function() {//tends to live inside playermanager
 				if (worldMap[(i+Math.floor(object.x))%worldWidth][(j+Math.floor(object.y))%worldWidth].owner != null &&
 				 worldMap[(i+Math.floor(object.x))%worldWidth][(j+Math.floor(object.y))%worldWidth].owner != object.id) {
 					console.log("COLLISION");
-					object.x = (object.x+25)%worldWidth;
-					object.y = (object.y+15)%worldWidth;
+					object.x = (object.x+Math.random()*worldWidth)%worldWidth;
+					object.y = (object.y+Math.random()*worldWidth)%worldWidth;
 					console.log("player relocated to "+ object.x+ " " + object.y);
 					while (object.bodyPixels.length > 0) {
 						var px =(object.bodyPixels.pop());
@@ -209,8 +218,7 @@ var physicsManager = function() {//tends to live inside playermanager
 var physics = new physicsManager;
 
 var player = function(name,id) {
-
-	this.bulletpixels = [];
+	this.dead = false;
 	this.id= id;
 	this.name=name;
 	this.x= rules.startX;
@@ -228,6 +236,29 @@ var player = function(name,id) {
 	this.motionType = "halting";
 	this.speed = "slow";
 	this.type = "player";
+	this.netTheta = 0;
+	physics.createBody(this);
+	physics.createNewBlockData(this);
+}; 
+
+var bullet = function(id) {
+	this.dead = false;
+	this.id= id;
+	this.x= Math.random()*500;
+	this.y= Math.random()*500;
+	this.theta = 0;
+	this.R = 255;
+	this.G = 0;
+	this.B = 0;
+	this.A = 255;
+	this.orient= rules.startOrient;
+	this.width= 6;
+	this.height= 6;
+	this.connected =true;
+	this.moving= 1;
+	this.motionType = "continuous";
+	this.speed = "fast";
+	this.type = "bullet";
 	this.netTheta = 0;
 	physics.createBody(this);
 	physics.createNewBlockData(this);
@@ -334,7 +365,7 @@ var playerManager = function(rules) {
 	var players = {};
 	var timeoutPlayers = {};
 	var playerCount = 0;
-	
+	var bullets = 0;
 	this.getPlayerCount = function() {
 		return playerCount;
 	}
@@ -358,6 +389,12 @@ var playerManager = function(rules) {
 			if (data.value == 79) {
 				players[data.id].moving = 1;
 			}
+			if (data.value == 32) {
+				bullets++;
+				players[data.id+1000+bullets] = new bullet(data.id+1000+bullets);
+				//players[data.id+1000+bullets].x = players[data.id].x+10;
+				//players[data.id+1000+bullets].y = players[data.id].y+10;
+			}
 			//game engine commands
 		}
 		else if (data.topic == "connected")
@@ -373,7 +410,7 @@ var playerManager = function(rules) {
 				} else {
 					console.log("player "+ data.id + " has connected")
 					players[data.id] = new player(data.name,data.id);
-					for (var i = 100; i<150; i++) {
+					for(var i =100; i< 150; i++) {
 						players[data.id+i] = new player(data.name,data.id+i);
 					}
 					playerCount++;
@@ -400,12 +437,25 @@ exports.begin = function(wss){
 	var network = new socketManager(wss, rules);
 	var playerMan = new playerManager(rules);
 	var WAT = 1;
+	var lastpulse = 0;
+	var pulse = 0;
 	setInterval(function() {
+		lastpulse = pulse;
+		pulse = Date.now();
+		console.log(pulse-lastpulse);
 		playerMan.modifyAllPlayers(function(p) {
+			if (p.dead) {
+			physics.destroyBody(playerMan.getPlayers()[p.id]);
+			delete playerMan.getPlayers()[p.id];
+			}
+			if (p.type == "player") {
 			p.moving = WAT;
 			p.theta += 5;
-			physics.moveObject(p);
-			physics.rotateObject(p);
+			} else {
+			p.theta +=5;
+			}
+			physics.moveObject(p,playerMan.getPlayers());
+			physics.rotateObject(p,playerMan.getPlayers());
 		});
 	},interval)
 	setInterval(function() {

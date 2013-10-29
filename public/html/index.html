@@ -16,8 +16,7 @@
 		canvas.height = 500;
 		var context = canvas.getContext('2d');
 		var inMemCanvas = document.createElement("canvas");
-		 inMemCanvas.width = 25;
-		 inMemCanvas.height = 10;
+
 		var inMemContext = inMemCanvas.getContext("2d");
 		socket.onmessage = function(message) {
 			data = JSON.parse(message.data);
@@ -28,7 +27,9 @@
 				context.clearRect(0,0,canvas.width,canvas.height);
 				for (pk in data["value"]) {
 					if (pk != "count") {
-						var imgData=inMemContext.createImageData(15,10);
+						inMemCanvas.width = data["value"][pk].width;
+		 				inMemCanvas.height = data["value"][pk].height;
+						var imgData=inMemContext.createImageData(data["value"][pk].width,data["value"][pk].height);
 						for (var i=0;i<imgData.data.length;i+=4)
 						{
 							imgData.data[i+0]=data["value"][pk].imgData[i+0];

@@ -79,7 +79,7 @@ var physicsManager = function() {//tends to live inside playermanager
 					var die = (object.type == "bullet" || players[worldMap[fx][fy].owner].type == "bullet");
 					if (die) {
 						object.dead = true;
-						players[worldMap[fx][fy].owner].dead = true;
+						if (players[worldMap[fx][fy].owner])players[worldMap[fx][fy].owner].dead = true;
 						return;
 					}
 					//console.log("collision");
@@ -132,10 +132,15 @@ var physicsManager = function() {//tends to live inside playermanager
 			var fx = Math.floor(newX);
 			var fy = Math.floor(newY);
 			if (worldMap[fx][fy].owner != null && worldMap[fx][fy].owner != object.id) {
+				if (object.type =="bullet" || players[worldMap[fx][fy].owner].type == "bullet") {
+					object.dead = true;
+					players[worldMap[fx][fy].owner].dead = true;
+				}
 				//console.log("collision");
 				object.theta =0;
 				return;
 			}
+
 		}
 
 		for (var i = object.bodyPixels.length - 2; i >= 0; i--) {
@@ -410,7 +415,7 @@ var playerManager = function(rules) {
 				} else {
 					console.log("player "+ data.id + " has connected")
 					players[data.id] = new player(data.name,data.id);
-					for(var i =100; i< 150; i++) {
+					for(var i =100; i< 250; i++) {
 						players[data.id+i] = new player(data.name,data.id+i);
 					}
 					playerCount++;
@@ -442,7 +447,7 @@ exports.begin = function(wss){
 	setInterval(function() {
 		lastpulse = pulse;
 		pulse = Date.now();
-		console.log(pulse-lastpulse);
+		//console.log(pulse-lastpulse);
 		playerMan.modifyAllPlayers(function(p) {
 			if (p.dead) {
 			physics.destroyBody(playerMan.getPlayers()[p.id]);

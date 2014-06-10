@@ -1,0 +1,82 @@
+body {
+	background: black;
+	padding:0px;
+	margin:0px;
+}
+@font-face {
+	font-family: sp;
+	src: url('SourceSansPro-Regular.otf');	
+	font-size: 18px;
+	text-align: center;
+	vertical-align: middle;
+}
+.section * {
+	font-family: sp;
+}
+.section {
+	position: absolute;	
+	border-radius: 500px;
+	background-color: rgba(50,50,50,0.5);
+}
+
+#local-section {
+	left: 25%;
+	top: 25%;
+	padding: 90px 75px 90px 75px;
+}
+
+#google-section {
+	top: 5%;
+	left: 5%;
+	width: 150px;
+	padding: 80px 40px 80px 40px;
+}
+#google-section .input-item {
+	margin-bottom: 8px;
+}
+
+.input-item {
+	width: 90%;
+	height: 20px;
+	background: rgba(60,60,60,0.5);
+	border: 1px solid transparent;
+	border-radius: 2px;
+	color: black;
+}
+label {	
+}
+label:hover {
+	cursor: pointer;
+}
+.input-item:hover, .input-item:focus {
+	border: 1px solid red;
+	cursor: pointer;
+}
+
+.button {
+	font-family: sp;
+	color: black;
+	font-size: 16px;
+	font-style: none;
+	text-decoration: none;
+	padding: 2px;
+	margin: 5px 1px 0px 0px;
+	background: rgba(60,60,60,0.5);
+	border: 1px solid transparent;
+	border-radius: 2px;
+}
+a.button {
+	padding-bottom:3px;	
+}
+.button:hover, .button:focus {
+	border: 1px solid red;
+	cursor: pointer;
+}
+
+::-webkit-input-placeholder {
+	color : rgb(85,85,85);
+}
+
+input-placeholder {
+	color : rgb(85,85,85);
+}

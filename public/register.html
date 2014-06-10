@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Gateway</title>
+	<link rel="stylesheet" type="text/css" href="/stylesheets/register.css">
+	<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+	<script type="text/javascript" src="/js/register.js"></script>
+	<script type="text/javascript">
+	$(document).ready(function(){
+		var ball = $("#register-div");
+		ball.css({"position":"absolute","left":document.width/2-ball.width()});
+	});
+	</script>
+	<script type="text/javascript" src="/js/universe.js">	</script>
+</head>
+<body>
+<canvas id="universe-canvas"></canvas>
+<div >
+	<div id ="local-section" class="section">
+		<form action="/register" method="POST">
+			<div>
+			<label for="email">Email</label>
+			<input type="email" name="email" id="email" class="input-item" placeholder=""/>
+			</div>
+			<div>
+			<label for="username">Playername</label>
+			<input type="text" name="username"  class="input-item" placeholder="StarLord"/>
+			</div>
+			<div>
+			<label for="password">Password</label>
+			<input type="password" name="password" class="input-item" id="password"/>
+			</div>
+			<div>
+			<input type="submit" id="submit" class="button" value="Register and play"/>
+			<a href="/logout" class="button">Cancel</a>
+			</div>
+		</form>
+	</div>
+<!-- 	<div id ="google-section" class="section">
+		<form>
+			<label for="username">Playername</label>
+			<input tye="text" name="username" class="input-item" placeholder="SunLord"/>
+			<a href="/auth/google" class="button">Use Google</a>
+		</form>
+	</div> -->
+</div>
+
+<!-- <div id ="F-register-div">
+	<form action="/register" method="POST">
+		<div>
+		<label for="email">Email</label>
+		<input type="email" name="email" id="email" placeholder=""/>
+		</div>
+		<div>
+		<label for="username">Playername</label>
+		<input type="text" name="username" id="username" placeholder="StarLord"/>
+		</div>
+		<div>
+		<label for="password">Password</label>
+		<input type="password" name="password" id="password"/>
+		</div>
+		<div>
+		<input type="submit" id="submit" value="Register and play"/>
+		<a href="/logout">Cancel</a>
+		</div>
+	</form>
+</div> -->
+</body>
+</html>

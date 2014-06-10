@@ -1,0 +1,242 @@
+<style type="text/css">
+		@font-face {
+			font-family: sp;
+			src: url('SourceSansPro-Regular.otf');	
+		}
+		#game-stage canvas {
+			position: absolute;
+			height:500px;
+			width:500px;
+			background: transparent;
+			/*background: rgb(50,50,50);*/
+			border: 1px solid red;
+		}
+		#universe-canvas {
+			position: absolute;
+			margin-top: 0px;
+			margin-bottom: 0px;
+			border: 0px;
+		}
+		body {
+			/*background: rgb(25,25,25);*/
+			margin:0px;
+			padding:0px;
+		}
+		#header-div {
+			background: rgb(100,100,100);
+		}
+		#header {
+			background: rgb(100,100,100);
+			width: 1400px;
+			margin: auto
+		}
+		header {
+			height: 50px;
+			text-align: center;
+			background: rgb(100,100,100);
+		}
+		#content {
+			width: 1375px;
+			height: 500px;
+			margin: auto;
+			margin-top:0px;
+			margin-bottom: 0px;
+			background: transparent;
+			border-radius: 5px;
+			padding: 0px;
+		}
+		#initiate {
+			margin: auto;
+			margin-top: 15px;
+			margin-bottom: 15px;
+			width: 125px;
+			height: 75px;
+		}
+		.button {
+			width: 125px;
+			height: 75px;
+			border-radius: 3px;
+			border-color: transparent;
+		}
+		#left-shoulder {
+			position: relative;
+			top: -65px;
+			float: left;
+			background: rgba(200,200,200,0.1);
+			width: 225px;
+			margin-left:12.5px;
+			margin-right: 12.5px;
+			height: 5px;
+			border: 1px solid red;
+			border-radius: 4px;
+		}
+		#stats {
+			background: rgba(200,0,0,0.1);
+			color: white;
+			float: left;
+			width: 175px;
+			margin-left:12.5px;
+			margin-right: 12.5px;
+			height: 5px;
+			border: 1px solid red;
+			border-radius: 4px;
+		}
+		#game-stage {
+			float: left;
+			width: 500px;
+			height: 500px;
+			border-color: transparent;
+			background: transparent;
+		}
+		#right-shoulder {
+			color: white;
+			position: relative;
+			top: -65px;
+			float: left;
+			width: 225px;
+			margin-left:12.5px;
+			margin-right: 12.5px;
+			background: rgba(200,200,200,0.1);
+			height: 5px;
+			border: 1px solid red;
+			border-radius: 4px;
+		}
+		#scoreboard {
+			background: rgba(200,0,0,0.1);
+			float: left;
+			width: 140px;
+			margin-left:12.5px;
+			margin-right: 12.5px;
+			height: 5px;
+			color: white;
+			border: 1px solid red;
+			border-radius: 4px;
+		}
+		.clear:after {
+			content: "";
+			display: table;
+			clear: both;
+		}
+		#footer {
+			color: grey;
+			position: fixed;
+			bottom: 0px;
+			text-align: center;
+		}
+		#normal-login, #auth-login {
+			position: absolute;
+			display: none;
+			width: 200px;
+			height: 82px;
+			background: rgba(25,25,25,1);
+			border-radius: 4px;
+
+		}
+		#normal-login {
+			border-right: 6px solid black;
+		}
+		#auth-login {
+			border-left: 6px solid black;
+		}
+		#auth-login a {
+			position: relative;/*this is a temporary thing*/
+			top: 28px;
+			left: 30px;
+		}
+		#normal-login input, #add_username input {
+			background: grey;
+			box-shadow: 0px;
+			border : 0px;
+			margin-top: 3px;
+			margin-left: 20px;
+			border-radius: 4px;
+		}
+		#normal-login input[type=email] {
+		}
+		#normal-login input[type=password] {
+		}
+		#normal-login button {
+			margin-left: 47px;
+			margin-top: 3px;
+			width: 100px;
+			height: 28px;
+			border: 0px;
+			border-radius: 4px;
+		}
+		.q {
+			position: absolute;
+			display: none;
+			padding: 0px;
+			margin: 0px;
+			width: 250px;
+			height: 250px;
+		}
+
+		#q1 {
+			border-left: 1px solid red;
+			border-bottom: 1px solid red;
+		}
+		#q2 {
+			border-top: 1px solid red;
+			border-left: 1px solid red;
+		}
+		#q3 {
+			border-top: 1px solid red;
+			border-right: 1px solid red;
+		}
+		#q4 {
+			border-bottom: 1px solid red;
+			border-right: 1px solid red;
+		}
+		#effectbar {
+			position: absolute;
+			width: 0px;
+			height: 0px;
+		}
+		#warning {
+			color: red;
+			display: block;
+		}
+		#add_username {
+			background: black;
+			color: white;
+			width: 300px;
+			margin:auto;
+			border-radius: 2px;
+			padding:3px;
+		}
+		#add_username input[type=text],#left-shoulder input {
+			border: 1px solid transparent;
+			background: rgba(80,80,80,0.5);
+			border-radius: 2px;
+			margin-top: 5px;
+			margin-bottom: 5px;
+		}
+		#links {
+			margin-left:10%;
+		}
+		#links a {
+			margin-left: 5%;
+		}
+
+		#statements {
+			height: 90%;
+		}
+		#left-shoulder input {
+			width: 100%;
+		}
+		input[type=text],[type=email] {
+			color: white;
+		}
+		::-webkit-input-placeholder {
+			color : rgb(85,85,85);
+		}
+
+		input-placeholder {
+			color : rgb(85,85,85);
+		}
+
+		#left-shoulder h4 {
+			color: white;
+		}
+	</style>

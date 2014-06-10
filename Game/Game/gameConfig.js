@@ -1,0 +1,12 @@
+exports.speed = 60;
+exports.playerRotateRate = Math.PI/180;
+exports.heartRate = 100;
+exports.pingRate = 100;
+exports.maxRotation = 10*exports.playerRotateRate;
+exports.maxVelocity = 15;
+exports.spawnPlayerPosition = {"x":15,"y":15};
+exports.spawnPlayerAngle = 0;
+exports.spawnPlayerVelocity = 0;
+exports.spawnPlayerRotationalVelocity = 0;
+exports.mapWidth = 500;
+exports.mapHeight = 500;

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>StarSlam</title>
+	<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+	<link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+	<script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" href="/stylesheets/index.css">
+	<script type="text/javascript" src="/js/index.js"></script>
+	<script type="text/javascript" src="/js/universe.js"></script>
+	<script type="text/javascript" src="/js/gameNetworker.js"></script>
+	<script type="text/javascript">
+
+	</script>
+</head>
+<body>
+	<div id="q1" class="q"></div>
+	<div id="q2" class="q"></div>
+	<div id="q3" class="q"></div>
+	<div id="q4" class="q"></div>
+<canvas id="universe-canvas" style="z-index: -1;"></canvas>
+<div id="header-div">
+	<div id="header" class="clear">
+		<header>
+			<div><h1>Do you have what it takes?</h1></div>
+		</header>
+		<div id="links">
+		<a id="logout" href="/logout">Logout</a>
+<!-- 		<a id="terms" href="/terms">Terms</a>
+		<a id="privacy" href="privacy">Privacy</a> -->
+		</div>
+	</div>
+	</div>
+	
+	<div id ="content" class="clear">
+			<form id="add_username" action="/registerUsername" method="POST">
+				<label> Please enter a username to get started with this conquer the universe business:</label>
+				<input type="text" name="username" id ="playername" placeholder=" starmaster">
+				<input type="submit" class="" value="submit">
+			</form>
+		<div id="normal-login">
+			<form action="/login" method="POST">
+				<input type="email" name="username" id="username" placeholder=" email">
+				<input type="password" name="password" id="password" placeholder=" password">
+				<input type="submit" id="login" value="login"></input>
+				<a href="/register">register</a>
+			<span id="warning"></span>
+			</form>
+		</div>
+		<div id="effectbar"></div>
+		<div id="init-wrapper"><div id="initiate"><button class="button">BEGIN</button></div></div>
+		<div id="auth-login">
+			<a href="/auth/google">Sign in with google</a>
+		</div>
+		<div id="left-shoulder">
+			<h4>Chat</h4>
+			<div id="statements">
+			</div>
+			<input type="text">
+		</div>
+		<div id="stats">
+			<h4>Game Statistics</h4>
+			<div id="ping"><span>timeGap :<span id="ping-val"></span></span></div>
+			<div id="players"><span>player count :<span id="players-val"></span></span></div>
+		</div>
+		<div id="game-stage">
+			<canvas id="gameCanvas" width="500" height="500"></canvas>
+
+		</div>
+		<div id="scoreboard">
+			<h4>Leaderboard</h4>
+		</div>
+		<div id="right-shoulder"><h4>Updates</h4></div>
+	</div>
+	<div id="footer">Page by Ben Sammons, 2013</div>
+</body>
+</html>

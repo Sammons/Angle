@@ -14,7 +14,5 @@ How it Works
 
 * Which is delivered from the client, which collects user input and delivers it via websocket to the gameserver. It also processes the gamestate updates from the server.
 
-cheers for javascript.
-
-to run locally just do node index.js and checkout localhost:5080
+cheers for javascript
 
